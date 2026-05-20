@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cómo construimos tu app de figuritas — Guía didáctica</title>
+<style>
+:root {
+  --blue:   #2563eb; --blue-l:   #eff6ff; --blue-b:   #bfdbfe;
+  --green:  #16a34a; --green-l:  #f0fdf4; --green-b:  #bbf7d0;
+  --orange: #d97706; --orange-l: #fffbeb; --orange-b: #fde68a;
+  --purple: #7c3aed; --purple-l: #f5f3ff; --purple-b: #ddd6fe;
+  --red:    #dc2626; --red-l:    #fef2f2; --red-b:    #fecaca;
+  --gray:   #64748b; --bg: #f8fafc; --dark: #0f172a;
+  --serif: Georgia, 'Times New Roman', serif;
+  --sans:  system-ui, -apple-system, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--sans);background:var(--bg);color:#1e293b;line-height:1.7}
+
+/* ── COVER ── */
+.cover{
+  background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 55%,#1d4ed8 100%);
+  color:#fff;text-align:center;padding:60px 20px 50px;
+  position:relative;overflow:hidden
+}
+.cover::before{
+  content:'⚽';font-size:200px;opacity:.06;
+  position:absolute;top:-30px;right:-20px;line-height:1
+}
+.cover-tag{
+  display:inline-block;background:rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.3);border-radius:20px;
+  padding:4px 14px;font-size:.8em;margin-bottom:16px;letter-spacing:.5px
+}
+.cover h1{font-size:clamp(1.6em,4vw,2.6em);font-weight:800;margin-bottom:10px;line-height:1.2}
+.cover p{font-size:1.05em;opacity:.8;max-width:560px;margin:0 auto 24px}
+.cover-meta{
+  display:flex;gap:24px;justify-content:center;flex-wrap:wrap;
+  font-size:.82em;opacity:.65
+}
+
+/* ── NAV ── */
+.toc{
+  background:#fff;border-bottom:1px solid #e2e8f0;
+  padding:12px 20px;position:sticky;top:0;z-index:50;
+  display:flex;gap:6px;flex-wrap:wrap;justify-content:center
+}
+.toc a{
+  color:var(--blue);text-decoration:none;font-size:.78em;font-weight:600;
+  padding:4px 10px;border-radius:12px;border:1px solid var(--blue-b);
+  transition:background .15s
+}
+.toc a:hover{background:var(--blue-l)}
+
+/* ── LAYOUT ── */
+.wrap{max-width:860px;margin:0 auto;padding:0 20px}
+
+/* ── INTRO CARD ── */
+.intro{
+  background:#fff;border-radius:16px;margin:32px 0;padding:28px 32px;
+  box-shadow:0 2px 12px rgba(0,0,0,.07);border-left:5px solid var(--blue)
+}
+.intro h2{font-size:1.25em;margin-bottom:12px;color:var(--blue)}
+.intro p{margin-bottom:10px;font-size:.97em}
+
+/* ── STEP ── */
+.step{
+  background:#fff;border-radius:16px;margin:32px 0;
+  box-shadow:0 2px 12px rgba(0,0,0,.06);overflow:hidden
+}
+.step-header{
+  display:flex;align-items:center;gap:16px;padding:22px 28px;
+  border-bottom:1px solid #f1f5f9
+}
+.step-num{
+  width:52px;height:52px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.5em;font-weight:900;flex-shrink:0
+}
+.step-title{flex:1}
+.step-title h2{font-size:1.2em;margin-bottom:2px}
+.step-title .phase{font-size:.75em;font-weight:700;text-transform:uppercase;letter-spacing:.8px;opacity:.6}
+.step-body{padding:24px 28px;display:flex;flex-direction:column;gap:20px}
+
+/* colors per step */
+.s1 .step-num{background:#e0f2fe;color:#0369a1}
+.s2 .step-num{background:#f0fdf4;color:#15803d}
+.s3 .step-num{background:#faf5ff;color:#7c3aed}
+.s4 .step-num{background:#fff7ed;color:#c2410c}
+.s5 .step-num{background:#fdf4ff;color:#a21caf}
+.s6 .step-num{background:#f0f9ff;color:#0284c7}
+.s7 .step-num{background:#f7fee7;color:#4d7c0f}
+.s8 .step-num{background:#fef2f2;color:#dc2626}
+
+/* ── BLOCKS ── */
+.narrative{font-size:.97em;color:#334155}
+.narrative p{margin-bottom:10px}
+.narrative p:last-child{margin-bottom:0}
+
+.terms-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+
+.term-card{
+  border-radius:12px;padding:14px 16px;border:1.5px solid;
+}
+.term-card .en{font-size:.72em;font-weight:700;text-transform:uppercase;letter-spacing:.6px;opacity:.65}
+.term-card .es{font-size:1.05em;font-weight:800;margin:2px 0 6px}
+.term-card .def{font-size:.82em;line-height:1.5;opacity:.85}
+
+.tc-blue  {background:var(--blue-l);  border-color:var(--blue-b);  color:#1e3a8a}
+.tc-green {background:var(--green-l); border-color:var(--green-b); color:#14532d}
+.tc-orange{background:var(--orange-l);border-color:var(--orange-b);color:#78350f}
+.tc-purple{background:var(--purple-l);border-color:var(--purple-b);color:#4c1d95}
+.tc-red   {background:var(--red-l);   border-color:var(--red-b);   color:#7f1d1d}
+
+.analogy{
+  background:#fffbeb;border:1.5px solid #fde68a;border-radius:12px;
+  padding:16px 18px;display:flex;gap:14px;align-items:flex-start
+}
+.analogy .icon{font-size:2em;flex-shrink:0;line-height:1.2}
+.analogy .text{font-size:.9em;color:#78350f}
+.analogy .text strong{display:block;font-size:1em;margin-bottom:4px;color:#92400e}
+
+.decision{
+  background:var(--purple-l);border:1.5px solid var(--purple-b);border-radius:12px;
+  padding:16px 18px;font-size:.88em;color:#4c1d95
+}
+.decision strong{display:block;margin-bottom:6px;font-size:1em}
+.decision ul{margin-left:18px;margin-top:6px}
+.decision li{margin-bottom:4px}
+
+.did{
+  background:var(--green-l);border:1.5px solid var(--green-b);border-radius:12px;
+  padding:16px 18px;font-size:.88em;color:#14532d
+}
+.did strong{display:block;margin-bottom:6px;font-size:.95em;text-transform:uppercase;letter-spacing:.4px}
+.did ul{margin-left:18px;margin-top:4px}
+.did li{margin-bottom:4px}
+
+.code-block{
+  background:#1e293b;color:#e2e8f0;border-radius:12px;
+  padding:16px 18px;font-family:monospace;font-size:.83em;line-height:1.6;
+  overflow-x:auto
+}
+.code-block .comment{color:#94a3b8}
+.code-block .key{color:#7dd3fc}
+.code-block .val{color:#86efac}
+.code-block .str{color:#fde68a}
+
+.section-label{
+  font-size:.72em;font-weight:800;text-transform:uppercase;letter-spacing:.8px;
+  color:var(--gray);margin-bottom:8px
+}
+
+/* ── DIAGRAM ── */
+.diagram{
+  background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;
+  padding:20px;display:flex;flex-direction:column;gap:0;align-items:center
+}
+.d-row{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
+.d-box{
+  padding:10px 16px;border-radius:10px;font-size:.82em;font-weight:700;
+  text-align:center;min-width:100px
+}
+.d-arrow{font-size:1.4em;color:#94a3b8;margin:4px 0}
+.d-label{font-size:.72em;color:#64748b;text-align:center;margin-top:4px}
+
+/* ── GLOSSARY ── */
+.glossary{background:#fff;border-radius:16px;margin:32px 0;padding:28px 32px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.glossary h2{font-size:1.3em;margin-bottom:20px;color:var(--dark)}
+.glos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.glos-item{
+  border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;
+  display:flex;flex-direction:column;gap:2px
+}
+.glos-item .gen{font-size:.72em;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.5px}
+.glos-item .ges{font-size:1em;font-weight:800;color:var(--dark)}
+.glos-item .gdef{font-size:.8em;color:#475569;margin-top:4px;line-height:1.45}
+
+/* ── CONCLUSION ── */
+.conclusion{
+  background:linear-gradient(135deg,#0f172a,#1e3a5f);
+  color:#fff;border-radius:16px;margin:32px 0;padding:32px;
+  box-shadow:0 4px 20px rgba(0,0,0,.15)
+}
+.conclusion h2{font-size:1.4em;margin-bottom:16px}
+.conclusion p{font-size:.95em;opacity:.85;margin-bottom:12px}
+.conclusion .takeaways{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:12px;margin-top:20px
+}
+.takeaway{
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  border-radius:12px;padding:14px;font-size:.85em
+}
+.takeaway .emoji{font-size:1.4em;display:block;margin-bottom:6px}
+.takeaway strong{display:block;margin-bottom:4px}
+
+/* ── TIMELINE LINE (desktop) ── */
+@media(min-width:700px){
+  .step-header{padding:24px 32px}
+  .step-body{padding:28px 32px}
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:500px){
+  .cover{padding:40px 16px 36px}
+  .step-body,.step-header{padding:18px}
+  .terms-grid{grid-template-columns:1fr}
+  .toc{display:none}
+}
+
+footer{text-align:center;padding:40px 20px;font-size:.8em;color:#94a3b8}
+</style>
+</head>
+<body>
+
+<!-- ══ COVER ══════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-tag">📘 Guía didáctica · Nivel intermedio</div>
+  <h1>Cómo construimos tu app de figuritas<br>con Inteligencia Artificial</h1>
+  <p>Un recorrido paso a paso, sin código, por cada decisión que tomamos para convertir tus fotos en una app web funcional y publicada en internet.</p>
+  <div class="cover-meta">
+    <span>⚽ Figuritas Mundial 2026</span>
+    <span>🤖 Claude AI + GitHub Pages</span>
+    <span>📅 Mayo 2026</span>
+  </div>
+</div>
+
+<!-- ══ NAVEGACIÓN ══════════════════════════════════════════════════ -->
+<nav class="toc">
+  <a href="#intro">Introducción</a>
+  <a href="#paso1">1. El Prompt</a>
+  <a href="#paso2">2. La tecnología</a>
+  <a href="#paso3">3. HTML/CSS/JS</a>
+  <a href="#paso4">4. Los datos</a>
+  <a href="#paso5">5. Los clicks</a>
+  <a href="#paso6">6. Usuarios</a>
+  <a href="#paso7">7. Exportar</a>
+  <a href="#paso8">8. Internet</a>
+  <a href="#glosario">Glosario</a>
+</nav>
+
+<div class="wrap">
+
+<!-- ══ INTRO ══════════════════════════════════════════════════════ -->
+<div class="intro" id="intro">
+  <h2>🗺️ ¿Qué vas a aprender con esta guía?</h2>
+  <p>En esta sesión de trabajo, vos aportaste el problema y los materiales (fotos del álbum, listas manuscritas, el formato deseado) y yo —Claude, una IA— lo transformé en una aplicación web completa, publicada en internet, sin que vos escribieras una sola línea de código.</p>
+  <p>Esta guía explica <strong>cada decisión y cada tecnología</strong> involucrada, con el lenguaje técnico correcto y una explicación de por qué se usa. Al terminar vas a entender el proceso completo, desde el pedido hasta la URL pública.</p>
+  <p>No necesitás saber programar para entender esto. Solo necesitás la curiosidad que ya tenés.</p>
+</div>
+
+<!-- ══ PASO 1 ══════════════════════════════════════════════════════ -->
+<div class="step s1" id="paso1">
+  <div class="step-header">
+    <div class="step-num">1</div>
+    <div class="step-title">
+      <div class="phase">Fase 1 — Entender el problema</div>
+      <h2>📸 El Prompt y la Visión Artificial</h2>
+    </div>
+  </div>
+  <div class="step-body">
+
+    <div class="narrative">
+      <p>Todo empezó cuando me mandaste las fotos y me describiste qué querías. Eso se llama <strong>prompt</strong>: la instrucción que le das a una IA. La calidad del resultado depende enormemente de qué tan bien describís el problema.</p>
+      <p>Junto con el texto, mandaste <strong>5 imágenes</strong>: el índice del álbum, 3 páginas de listas manuscritas y una foto del álbum abierto. Yo no "vi" esas fotos como las ve un humano —las analicé píxel a píxel usando un modelo de <strong>visión por computadora</strong> entrenado para entender imágenes.</p>
+      <p>Esto me permitió leer las abreviaturas de los países (MEX, RSA, KOR…), identificar los números de figuritas que estaban escritos a mano con marcador, y entender la estructura del álbum aunque la escritura era irregular y había tachones.</p>
+    </div>
+
+    <div>
+      <div class="section-label">Conceptos clave</div>
+      <div class="terms-grid">
+        <div class="term-card tc-blue">
+          <div class="en">Prompt / Prompt Engineering</div>
+          <div class="es">Instrucción / Ingeniería de instrucciones</div>
+          <div class="def">El texto que le escribís a la IA para pedirle algo. "Prompt engineering" es el arte de redactar ese pedido de forma que la IA lo entienda bien y dé el mejor resultado posible.</div>
+        </div>
+        <div class="term-card tc-purple">
+          <div class="en">Computer Vision</div>
+          <div class="es">Visión por computadora</div>
+          <div class="def">Capacidad de una IA de analizar e interpretar imágenes. No "ve" como un humano; convierte la imagen en millones de números y aplica modelos matemáticos para entender qué hay en ella.</div>
+        </div>
+        <div class="term-card tc-green">
+          <div class="en">Multimodal AI</div>
+          <div class="es">IA multimodal</div>
+          <div class="def">Una IA que puede procesar distintos tipos de datos al mismo tiempo: texto, imágenes, audio. Claude es multimodal: procesó tus fotos Y tu texto en el mismo pedido.</div>
+        </div>
+        <div class="term-card tc-orange">
+          <div class="en">Context Window</div>
+          <div class="es">Ventana de contexto</div>
+          <div class="def">La "memoria de trabajo" de la IA en cada conversación. Todo lo que mandás —texto, imágenes, código— ocupa espacio en esta ventana. Si se llena, la IA empieza a "olvidar" lo anterior.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="icon">🧠</div>
+      <div class="text">
+        <strong>La analogía</strong>
+        Imaginate contratar un asistente brillante que nunca trabajó con vos antes. Cuanto más claro le explicás el proyecto —qué es un álbum de figuritas, para qué sirve, qué querés al final— mejor va a ser su trabajo. El prompt es exactamente eso: el brief inicial que define todo lo que sigue.
+      </div>
+    </div>
+
+    <div class="did">
+      <strong>Lo que hice en este paso</strong>
+      <ul>
+        <li>Leí las 5 imágenes que mandaste usando visión por computadora</li>
+        <li>Extraje la lista de los 51 equipos con sus abreviaturas</li>
+        <li>Identifiqué la estructura: FWC (sección especial), 48 selecciones × 20 figuritas, sección CC</li>
+        <li>Interpreté el formato de exportación que mostraste como ejemplo</li>
+        <li>Entendí que el estado inicial de Mike venía en las listas manuscritas</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ PASO 2 ══════════════════════════════════════════════════════ -->
+<div class="step s2" id="paso2">
+  <div class="step-header">
+    <div class="step-num">2</div>
+    <div class="step-title">
+      <div class="phase">Fase 1 — Diseño de la solución</div>
+      <h2>🏗️ Elegir la tecnología correcta</h2>
+    </div>
+  </div>
+  <div class="step-body">
+
+    <div class="narrative">
+      <p>Antes de escribir una sola línea de código, la decisión más importante es <strong>qué tecnología usar</strong>. Esta decisión tiene consecuencias enormes: afecta el costo, la complejidad, la velocidad de desarrollo y cómo se usa la app.</p>
+      <p>Para este caso, elegí una <strong>aplicación web estática</strong>: un único archivo HTML que funciona directo en el navegador, sin servidor propio, sin base de datos en la nube, sin instalación. Es el equivalente informático de un documento Word muy inteligente que el navegador puede abrir.</p>
+    </div>
+
+    <div>
+      <div class="section-label">Conceptos clave</div>
+      <div class="terms-grid">
+        <div class="term-card tc-blue">
+          <div class="en">Static Site / Static App</div>
+          <div class="es">Sitio / App estático/a</div>
+          <div class="def">Una app que consiste solo en archivos (HTML, CSS, JS) que el navegador descarga y ejecuta localmente. No necesita un servidor procesando pedidos en tiempo real. Simple, rápida y muy barata de alojar.</div>
+        </div>
+        <div class="term-card tc-purple">
+          <div class="en">Dynamic Site</div>
+          <div class="es">Sitio dinámico</div>
+          <div class="def">Una app que tiene un servidor procesando datos en tiempo real (PHP, Python, Node.js…). Necesaria cuando hay usuarios, bases de datos compartidas, pagos, etc. Más compleja y cara. No la necesitábamos acá.</div>
+        </div>
+        <div class="term-card tc-green">
+          <div class="en">Browser / Navegador</div>
+          <div class="es">Navegador web</div>
+          <div class="def">Chrome, Firefox, Safari, Edge. Mucho más que un "visor de páginas": es un entorno completo de ejecución de código. Puede ejecutar lógica, guardar datos localmente y manejar interfaces complejas.</div>
+        </div>
+        <div class="term-card tc-orange">
+          <div class="en">No-backend / Serverless</div>
+          <div class="es">Sin servidor propio</div>
+          <div class="def">Arquitectura donde toda la lógica corre en el navegador del usuario, sin que vos pagues ni mantengas un servidor. Ideal para apps personales o familiares sin requisitos de datos compartidos en tiempo real.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="decision">
+      <strong>🤔 ¿Por qué no usamos otras opciones?</strong>
+      <ul>
+        <li><strong>App móvil nativa (iOS/Android):</strong> requiere publicar en las tiendas, pagar cuentas de desarrollador, y los usuarios deben instalarla. Demasiado overhead para este caso.</li>
+        <li><strong>Excel/Google Sheets:</strong> no permite la interactividad visual (clicks en números, cambio de colores), ni el layout de impresión compacto que necesitábamos.</li>
+        <li><strong>App con base de datos (Firebase, Supabase…):</strong> necesaria solo si los datos se comparten entre dispositivos en tiempo real. Aquí cada quien tiene su control independiente.</li>
+        <li><strong>HTML estático ✅:</strong> funciona offline, abre en cualquier celular sin instalar nada, es gratuito de hospedar, y el navegador ya tiene todo lo que necesitamos.</li>
+      </ul>
+    </div>
+
+    <div class="analogy">
+      <div class="icon">🏠</div>
+      <div class="text">
+        <strong>La analogía</strong>
+        La diferencia entre un sitio estático y uno dinámico es como la diferencia entre un libro y un restaurante. El libro tiene todo el contenido dentro: lo abrís y está ahí. El restaurante necesita cocineros, ingredientes frescos y personal en tiempo real. Para leer un libro no necesitás un restaurante.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ PASO 3 ══════════════════════════════════════════════════════ -->
+<div class="step s3" id="paso3">
+  <div class="step-header">
+    <div class="step-num">3</div>
+    <div class="step-title">
+      <div class="phase">Fase 2 — Construcción</div>
+      <h2>🎨 HTML, CSS y JavaScript: los tres lenguajes del navegador</h2>
+    </div>
+  </div>
+  <div class="step-body">
+
+    <div class="narrative">
+      <p>Cualquier página web que abrís en tu navegador está construida con exactamente tres lenguajes. Siempre. Son los únicos lenguajes que el navegador entiende de forma nativa, y cada uno tiene una función específica.</p>
+      <p>No son lenguajes de programación en el sentido tradicional —o al menos, no todos—. Es mejor pensarlos como tres capas de una misma torta, cada una con su rol.</p>
+    </div>
+
+    <div>
+      <div class="section-label">Los tres lenguajes del navegador</div>
+      <div class="terms-grid">
+        <div class="term-card tc-blue">
+          <div class="en">HTML — HyperText Markup Language</div>
+          <div class="es">Lenguaje de Marcado de Hipertexto</div>
+          <div class="def">Define QUÉ hay en la página: botones, textos, imágenes, divisiones. Es la estructura. Sin HTML no hay nada que mostrar. Creado en 1991 por Tim Berners-Lee, inventor de la web.</div>
+        </div>
+        <div class="term-card tc-purple">
+          <div class="en">CSS — Cascading Style Sheets</div>
+          <div class="es">Hojas de Estilo en Cascada</div>
+          <div class="def">Define CÓMO se ve lo que hay: colores, tamaños, posiciones, animaciones. Sin CSS, todo sería texto negro sobre fondo blanco. El "cascading" significa que las reglas se heredan de padres a hijos.</div>
+        </div>
+        <div class="term-card tc-green">
+          <div class="en">JavaScript</div>
+          <div class="es">JavaScript (sin traducción)</div>
+          <div class="def">Define QUÉ HACE la página: responde a clicks, guarda datos, actualiza contenido sin recargar. Es el único lenguaje de programación real de los tres. A pesar del nombre, no tiene nada que ver con Java.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="icon">🏗️</div>
+      <div class="text">
+        <strong>La analogía del edificio</strong>
+        <strong>HTML</strong> son los planos y la estructura: dónde van las paredes, las puertas, las ventanas.<br>
+        <strong>CSS</strong> es el diseño de interiores: los colores, los materiales, la decoración.<br>
+        <strong>JavaScript</strong> es la electricidad, la plomería y la domótica: lo que hace que el edificio funcione, responda y reaccione.
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Ejemplo real de la app</div>
+      <div class="code-block">
+<span class="comment"><!-- HTML: define que existe un botón --></span>
+&lt;button <span class="key">class</span>=<span class="str">"stk miss"</span> <span class="key">data-sec</span>=<span class="str">"MEX"</span> <span class="key">data-n</span>=<span class="str">"6"</span>&gt;6&lt;/button&gt;
+
+<span class="comment">/* CSS: el botón rojo que dice "falta" */</span>
+<span class="key">.stk.miss</span> {
+  <span class="key">background</span>: <span class="val">#fee2e2</span>;  <span class="comment">/* rojo claro */</span>
+  <span class="key">color</span>: <span class="val">#b91c1c</span>;
+  <span class="key">border</span>: <span class="val">1.5px solid #fca5a5</span>;
+}
+
+<span class="comment">// JavaScript: cuando hacés click, suma 1 al contador</span>
+<span class="key">counts</span>[<span class="str">"MEX"</span>][<span class="str">"6"</span>]++;   <span class="comment">// de 0 (falta) a 1 (tengo)</span>
+      </div>
+    </div>
+
+    <div class="did">
+      <strong>Lo que hice en este paso</strong>
+      <ul>
+        <li>Escribí ~500 líneas de HTML para la estructura de todas las tarjetas de equipos</li>
+        <li>Escribí ~300 líneas de CSS para los tres estados visuales (rojo/verde/amarillo) y el layout de impresión</li>
+        <li>Escribí ~400 líneas de JavaScript para toda la lógica (clicks, cálculos, export, usuarios)</li>
+        <li>Todo en un único archivo .html: la ventaja es que no hay que instalar nada</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ PASO 4 ══════════════════════════════════════════════════════ -->
+<div class="step s4" id="paso4">
+  <div class="step-header">
+    <div class="step-num">4</div>
+    <div class="step-title">
+      <div class="phase">Fase 2 — Construcción</div>
+      <h2>💾 Guardar los datos: JSON y localStorage</h2>
+    </div>
+  </div>
+  <div class="step-body">
+
+    <div class="narrative">
+      <p>Una app que no guarda datos no sirve de nada. Cada vez que marcás una figurita, ese dato tiene que persistir: si cerrás el navegador y lo volvés a abrir, todo tiene que estar como lo dejaste.</p>
+      <p>Para esto usamos dos tecnologías que trabajan juntas: <strong>JSON</strong> (el formato para representar los datos) y <strong>localStorage</strong> (el lugar donde el navegador los guarda en tu dispositivo).</p>
+    </div>
+
+    <div>
+      <div class="section-label">Conceptos clave</div>
+      <div class="terms-grid">
+        <div class="term-card tc-orange">
+          <div class="en">JSON — JavaScript Object Notation</div>
+          <div class="es">Notación de Objetos de JavaScript</div>
+          <div class="def">Un formato de texto para representar datos estructurados. Es lo que usa internet para que los programas se comuniquen. Legible por humanos y por máquinas. Se usa en absolutamente todas las apps modernas.</div>
+        </div>
+        <div class="term-card tc-blue">
+          <div class="en">localStorage</div>
+          <div class="es">Almacenamiento local del navegador</div>
+          <div class="def">Una pequeña base de datos que cada navegador mantiene en tu dispositivo, por sitio web. Es privada (nadie puede accederla remotamente), persiste entre sesiones, y tiene capacidad de ~5MB. Perfecta para este tipo de app.</div>
+        </div>
+        <div class="term-card tc-purple">
+          <div class="en">Data Structure</div>
+          <div class="es">Estructura de datos</div>
+          <div class="def">La manera en que organizamos los datos en memoria para que sean fáciles de leer y modificar. Un mal diseño de estructura de datos puede hacer que un programa simple se vuelva imposible de mantener.</div>
+        </div>
+        <div class="term-card tc-green">
+          <div class="en">Persistence</div>
+          <div class="es">Persistencia</div>
+          <div class="def">La propiedad de un dato de "sobrevivir" aunque el programa se cierre. Sin persistencia, cada vez que cerrás el navegador perdés todo. localStorage da persistencia sin necesitar una base de datos externa.</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Cómo se ven los datos guardados</div>
+      <div class="code-block">
+<span class="comment">// Así guardamos el estado del álbum de Mike en localStorage:</span>
+{
+  <span class="key">"MEX"</span>: {
+    <span class="str">"1"</span>: <span class="val">1</span>,  <span class="comment">// figurita 1 de México: la tengo (1)</span>
+    <span class="str">"6"</span>: <span class="val">0</span>,  <span class="comment">// figurita 6: me falta (0)</span>
+    <span class="str">"7"</span>: <span class="val">2</span>,  <span class="comment">// figurita 7: tengo 2 (repetida)</span>
+  },
+  <span class="key">"ARG"</span>: {
+    <span class="str">"1"</span>: <span class="val">1</span>,
+    <span class="str">"17"</span>: <span class="val">0</span>,  <span class="comment">// solo falta la 17 de Argentina</span>
+    ...
+  }
+}
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="icon">📒</div>
+      <div class="text">
+        <strong>La analogía</strong>
+        localStorage es como la memoria del navegador para ese sitio específico. Es como si tu navegador tuviera una libreta por cada sitio web que visitás. Cuando abrís la app, lee la libreta; cuando hacés un cambio, escribe en ella. Nadie más puede ver esa libreta —ni yo, ni GitHub, ni ningún servidor.
+      </div>
+    </div>
+
+    <div class="decision">
+      <strong>🤔 Implicación importante: los datos son locales</strong>
+      <ul>
+        <li>Los datos de Mike en su PC <strong>no son los mismos</strong> que en su celular. Son localStorage separados.</li>
+        <li>Si un tercero abre la URL de GitHub Pages, empieza con los datos de Mike <strong>precargados en el código</strong> (el estado inicial), no con los datos actuales de Mike.</li>
+        <li>Para datos compartidos en tiempo real entre dispositivos habría que agregar una base de datos en la nube —lo cual aumentaría mucho la complejidad.</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ PASO 5 ══════════════════════════════════════════════════════ -->
+<div class="step s5" id="paso5">
+  <div class="step-header">
+    <div class="step-num">5</div>
+    <div class="step-title">
+      <div class="phase">Fase 2 — Construcción</div>
+      <h2>⚡ Hacer que los clicks funcionen: Event Delegation</h2>
+    </div>
+  </div>
+  <div class="step-body">
+
+    <div class="narrative">
+      <p>Acá está la explicación del bug que tenía la primera versión: <em>"no funciona cuando clickeo en los números"</em>. Este es un problema clásico de JavaScript y vale la pena entenderlo porque ilustra perfectamente cómo piensan los programadores.</p>
+      <p>La primera versión usaba <strong>inline event handlers</strong> (manejadores de eventos en línea): cada botón tenía su propia instrucción <code>onclick="toggle(...)"</code> escrita directamente en el HTML. En algunos navegadores esto falla por problemas de <em>scope</em> (contexto de ejecución).</p>
+      <p>La solución fue <strong>event delegation</strong>: en vez de que cada uno de los 1.000+ botones escuche sus propios clicks, un único "recepcionista" en el contenedor padre escucha todos los clicks y determina en cuál botón ocurrieron.</p>
+    </div>
+
+    <div>
+      <div class="section-label">Conceptos clave</div>
+      <div class="terms-grid">
+        <div class="term-card tc-red">
+          <div class="en">Event / Event Handler</div>
+          <div class="es">Evento / Manejador de eventos</div>
+          <div class="def">Un "evento" es cualquier acción del usuario: click, toque, tecla presionada. Un "event handler" es la función JavaScript que responde a ese evento. Sin event handlers, la página no reacciona a nada.</div>
+        </div>
+        <div class="term-card tc-blue">
+          <div class="en">Event Delegation</div>
+          <div class="es">Delegación de eventos</div>
+          <div class="def">Técnica donde en vez de asignar un event handler a cada elemento, se asigna uno solo al contenedor padre. Cuando ocurre un click en cualquier hijo, "burbujea" hacia arriba hasta el padre, que lo procesa. Más eficiente y más robusto.</div>
+        </div>
+        <div class="term-card tc-purple">
+          <div class="en">Event Bubbling</div>
+          <div class="es">Burbujeo de eventos</div>
+          <div class="def">Cuando hacés click en un elemento, el evento "sube" automáticamente por todos sus elementos padre hasta llegar al &lt;body&gt;. Event delegation aprovecha este comportamiento para escuchar desde un elemento superior.</div>
+        </div>
+        <div class="term-card tc-green">
+          <div class="en">data-* attributes</div>
+          <div class="es">Atributos de datos personalizados</div>
+          <div class="def">Una forma de guardar información directamente en el HTML de un elemento. En la app, cada botón tiene data-sec="MEX" y data-n="6" para que al hacer click sepamos exactamente de qué figurita se trata, sin depender del texto visible.</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">El antes y el después del bug</div>
+      <div class="code-block">
+<span class="comment">❌ VERSIÓN 1 — inline handler (frágil, causaba el bug)</span>
+&lt;button <span class="key">onclick</span>=<span class="str">"toggle('MEX','6')"</span>&gt;6&lt;/button&gt;
+<span class="comment">// El problema: 'toggle' no siempre está disponible en ese contexto</span>
+
+<span class="comment">✅ VERSIÓN 2 — event delegation (robusto)</span>
+&lt;button <span class="key">data-sec</span>=<span class="str">"MEX"</span> <span class="key">data-n</span>=<span class="str">"6"</span>&gt;6&lt;/button&gt;
+
+<span class="comment">// Un solo listener en el contenedor maneja TODOS los clicks</span>
+document.<span class="key">getElementById</span>(<span class="str">'cards'</span>).<span class="key">addEventListener</span>(<span class="str">'click'</span>, <span class="key">function</span>(e) {
+  <span class="key">const</span> btn = e.target.<span class="key">closest</span>(<span class="str">'[data-n]'</span>);  <span class="comment">// ¿qué botón fue?</span>
+  <span class="key">if</span> (!btn) <span class="key">return</span>;
+  <span class="key">const</span> secId = btn.dataset.sec;   <span class="comment">// "MEX"</span>
+  <span class="key">const</span> n     = btn.dataset.n;     <span class="comment">// "6"</span>
+  counts[secId][n]++;              <span class="comment">// suma 1 al contador</span>
+});
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="icon">🏨</div>
+      <div class="text">
+        <strong>La analogía</strong>
+        Imaginá un hotel con 1.000 habitaciones. La versión 1 era poner un empleado detrás de cada puerta esperando que llamen. La versión 2 es poner una recepcionista en el lobby: todos los huéspedes pasan por ella, y ella sabe exactamente a qué habitación va cada uno leyendo la llave (los atributos data-*).
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ PASO 6 ══════════════════════════════════════════════════════ -->
+<div class="step s6" id="paso6">
+  <div class="step-header">
+    <div class="step-num">6</div>
+    <div class="step-title">
+      <div class="phase">Fase 2 — Construcción</div>
+      <h2>👥 Sistema de múltiples usuarios (Perfiles)</h2>
+    </div>
+  </div>
+  <div class="step-body">
+
+    <div class="narrative">
+      <p>Cuando pediste "más de un usuario", la pregunta técnica fue: ¿cómo guardo datos separados para cada perfil usando solo localStorage, que es un único espacio de almacenamiento por sitio?</p>
+      <p>La solución es conceptualmente simple: <strong>usar diferentes "llaves" (keys) en localStorage para cada usuario</strong>. Es como tener varios cajones en un mismo mueble, uno por persona.</p>
+    </div>
+
+    <div>
+      <div class="section-label">Conceptos clave</div>
+      <div class="terms-grid">
+        <div class="term-card tc-blue">
+          <div class="en">Key-Value Store</div>
+          <div class="es">Almacén de clave-valor</div>
+          <div class="def">Una forma de guardar datos donde cada pieza de información tiene un nombre único (clave) y un contenido (valor). localStorage es un key-value store. Es como un diccionario: buscás por palabra y obtenés la definición.</div>
+        </div>
+        <div class="term-card tc-green">
+          <div class="en">State Management</div>
+          <div class="es">Gestión de estado</div>
+          <div class="def">Cómo una app recuerda y gestiona la información "activa" en un momento dado: quién es el usuario actual, qué figuritas tiene, qué filtro está activado. El "estado" es la fotografía completa de la app en un instante.</div>
+        </div>
+        <div class="term-card tc-orange">
+          <div class="en">Hardcoded data</div>
+          <div class="es">Datos incrustados en el código</div>
+          <div class="def">Cuando un valor se escribe directamente en el código en lugar de venir de una base de datos o configuración externa. Los datos iniciales de Mike (sus 774 figuritas) están hardcodeados: están escritos en el archivo .html.</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Cómo se separan los datos por usuario</div>
+      <div class="code-block">
+<span class="comment">// Las "llaves" en localStorage para cada usuario:</span>
+<span class="str">"figus26-data-Mike"</span>  → <span class="val">{ MEX: {1:1, 6:0, ...}, ARG: {...} }</span>
+<span class="str">"figus26-data-FLM"</span>   → <span class="val">{ MEX: {1:0, 6:0, ...}, ARG: {...} }</span>
+<span class="str">"figus26-users"</span>      → <span class="val">[{id:"Mike",name:"Mike"}, {id:"FLM",name:"FLM"}]</span>
+<span class="str">"figus26-active"</span>     → <span class="val">"Mike"</span>   <span class="comment">// quién está activo ahora</span>
+
+<span class="comment">// Cuando cambiás de perfil:</span>
+<span class="val">1.</span> Guardo los datos del usuario actual (<span class="key">save()</span>)
+<span class="val">2.</span> Cambio el usuario activo en localStorage
+<span class="val">3.</span> Leo los datos del nuevo usuario
+<span class="val">4.</span> Re-dibujo toda la pantalla con los nuevos datos
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="icon">📁</div>
+      <div class="text">
+        <strong>La analogía</strong>
+        Es exactamente como tener distintos perfiles en Netflix. El contenido (la plataforma) es el mismo para todos, pero cada perfil tiene su propio historial, preferencias y configuración. Acá, la "plataforma" es el archivo HTML y cada perfil guarda su propio estado del álbum.
+      </div>
+    </div>
+
+    <div class="did">
+      <strong>Lo que hice en este paso</strong>
+      <ul>
+        <li>Creé los perfiles por defecto: Mike (con sus 774 figuritas pre-cargadas) y FLM (álbum vacío)</li>
+        <li>Los datos de Mike están <strong>hardcoded</strong> en el código: si alguien abre la URL de GitHub Pages, ve el estado inicial de Mike, no su estado actual</li>
+        <li>Los cambios posteriores de cada usuario se guardan en su propio espacio de localStorage, en el dispositivo donde usa la app</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ PASO 7 ══════════════════════════════════════════════════════ -->
+<div class="step s7" id="paso7">
+  <div class="step-header">
+    <div class="step-num">7</div>
+    <div class="step-title">
+      <div class="phase">Fase 2 — Construcción</div>
+      <h2>📤 Exportar e Imprimir: APIs del navegador</h2>
+    </div>
+  </div>
+  <div class="step-body">
+
+    <div class="narrative">
+      <p>El botón "Exportar texto" y el botón "Imprimir" parecen simples, pero usan dos tecnologías distintas que vale la pena entender.</p>
+      <p>Para exportar, usamos la <strong>Clipboard API</strong>: le pedimos al navegador que copie texto al portapapeles del sistema operativo. Para imprimir, usamos <strong>CSS de impresión</strong> (@media print): un conjunto de estilos especiales que solo se activan cuando el navegador va a imprimir, transformando radicalmente el diseño para que entre todo en una hoja A4.</p>
+    </div>
+
+    <div>
+      <div class="section-label">Conceptos clave</div>
+      <div class="terms-grid">
+        <div class="term-card tc-blue">
+          <div class="en">API — Application Programming Interface</div>
+          <div class="es">Interfaz de Programación de Aplicaciones</div>
+          <div class="def">Un conjunto de "puertas de acceso" que un sistema ofrece para que otros programas interactúen con él. El navegador expone APIs para todo: el portapapeles, la geolocalización, la cámara, el almacenamiento. La Clipboard API da acceso al copy/paste del sistema.</div>
+        </div>
+        <div class="term-card tc-purple">
+          <div class="en">@media print</div>
+          <div class="es">Regla de medios para impresión</div>
+          <div class="def">Una instrucción CSS que dice "estas reglas solo aplican cuando se está imprimiendo". Permite tener un diseño completamente diferente para la pantalla y para el papel: fuentes más chicas, sin botones, layout en columnas, colores distintos.</div>
+        </div>
+        <div class="term-card tc-green">
+          <div class="en">CSS Columns</div>
+          <div class="es">Columnas CSS</div>
+          <div class="def">Una propiedad CSS que distribuye el contenido automáticamente en múltiples columnas, como un periódico. Se usó para el layout de impresión: todos los equipos se distribuyen en 3 columnas para entrar en una hoja A4.</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">Cómo funciona el botón "Imprimir"</div>
+      <div class="diagram">
+        <div class="d-row">
+          <div class="d-box" style="background:#eff6ff;color:#1e3a8a">1. Click en "Imprimir"</div>
+          <div style="font-size:1.4em;color:#94a3b8">→</div>
+          <div class="d-box" style="background:#f0fdf4;color:#14532d">2. JavaScript genera el contenido (solo los que faltan)</div>
+          <div style="font-size:1.4em;color:#94a3b8">→</div>
+          <div class="d-box" style="background:#faf5ff;color:#6d28d9">3. Se inserta en el div oculto #print-view</div>
+        </div>
+        <div class="d-arrow">↓</div>
+        <div class="d-row">
+          <div class="d-box" style="background:#fff7ed;color:#c2410c">6. Impresora recibe la página</div>
+          <div style="font-size:1.4em;color:#94a3b8">←</div>
+          <div class="d-box" style="background:#fef2f2;color:#b91c1c">5. @media print: oculta la app, muestra #print-view en 3 columnas</div>
+          <div style="font-size:1.4em;color:#94a3b8">←</div>
+          <div class="d-box" style="background:#f7fee7;color:#4d7c0f">4. window.print() → el navegador abre el diálogo de impresión</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="icon">🎭</div>
+      <div class="text">
+        <strong>La analogía</strong>
+        @media print es como tener dos versiones de un documento: la que ves en la pantalla (con colores, botones, animaciones) y la que sale de la impresora (limpia, monocromática, optimizada para papel). Son el mismo HTML pero con un "disfraz" diferente según el contexto.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ PASO 8 ══════════════════════════════════════════════════════ -->
+<div class="step s8" id="paso8">
+  <div class="step-header">
+    <div class="step-num">8</div>
+    <div class="step-title">
+      <div class="phase">Fase 3 — Publicación</div>
+      <h2>🌐 Publicar en internet: GitHub y GitHub Pages</h2>
+    </div>
+  </div>
+  <div class="step-body">
+
+    <div class="narrative">
+      <p>Tener el archivo en tu PC está bien, pero para que "un tercero lo vea desde un celular" necesitamos que esté en un servidor en internet. Ahí entraron <strong>GitHub</strong> y <strong>GitHub Pages</strong>.</p>
+      <p>Encontré que tu PC tenía credenciales de GitHub guardadas (de una sesión anterior). Con esas credenciales, usé la <strong>API de GitHub</strong> para crear un repositorio, subir el archivo y activar el hosting —todo automáticamente, sin que vos tocaras nada.</p>
+    </div>
+
+    <div>
+      <div class="section-label">Conceptos clave</div>
+      <div class="terms-grid">
+        <div class="term-card tc-blue">
+          <div class="en">Git</div>
+          <div class="es">Git (sin traducción)</div>
+          <div class="def">Sistema de control de versiones: registra cada cambio que se hace en archivos de código, quién lo hizo y cuándo. Es como el historial de versiones de Google Docs pero para código. Creado por Linus Torvalds (el mismo de Linux) en 2005.</div>
+        </div>
+        <div class="term-card tc-purple">
+          <div class="en">GitHub</div>
+          <div class="es">GitHub (sin traducción)</div>
+          <div class="def">Plataforma web para guardar proyectos de código con Git. Es la "nube" del mundo del desarrollo. Más de 100 millones de desarrolladores guardan ahí su código. Fue comprada por Microsoft en 2018 por 7.500 millones de dólares.</div>
+        </div>
+        <div class="term-card tc-green">
+          <div class="en">Repository / Repo</div>
+          <div class="es">Repositorio</div>
+          <div class="def">Una carpeta en GitHub que contiene el código de un proyecto, con todo su historial de cambios. Como una carpeta en Drive pero con superpoderes: historial completo, quién cambió qué y cuándo, posibilidad de volver a cualquier versión.</div>
+        </div>
+        <div class="term-card tc-orange">
+          <div class="en">GitHub Pages</div>
+          <div class="es">Páginas de GitHub</div>
+          <div class="def">Un servicio gratuito de GitHub que toma los archivos de un repositorio y los sirve como un sitio web. En menos de 2 minutos, tu repositorio se convierte en una URL pública. Perfecto para sitios estáticos.</div>
+        </div>
+        <div class="term-card tc-red">
+          <div class="en">Token / OAuth Token</div>
+          <div class="es">Token / Credencial de acceso</div>
+          <div class="def">Una contraseña temporal y revocable que da acceso a una API. En vez de usar tu contraseña real, los servicios generan tokens con permisos específicos y fecha de vencimiento. Más seguro que compartir la contraseña directamente.</div>
+        </div>
+        <div class="term-card tc-blue">
+          <div class="en">API REST — HTTP Methods</div>
+          <div class="es">API REST — Métodos HTTP</div>
+          <div class="def">Protocolo para que programas se comuniquen via internet. Los "métodos" son tipos de pedidos: GET (traer), POST (crear), PUT (actualizar), DELETE (borrar). Para subir el archivo usé un PUT a la API de GitHub.</div>
+        </div>
+        <div class="term-card tc-purple">
+          <div class="en">Base64 encoding</div>
+          <div class="es">Codificación en Base64</div>
+          <div class="def">Una forma de convertir archivos binarios (o texto) en una cadena de caracteres que se puede enviar de forma segura por cualquier canal de texto (como una API). El archivo HTML se convirtió a Base64 antes de enviarlo a GitHub.</div>
+        </div>
+        <div class="term-card tc-green">
+          <div class="en">Deploy / Deployment</div>
+          <div class="es">Despliegue</div>
+          <div class="def">El proceso de poner una aplicación en producción: subirla al servidor donde va a funcionar de forma pública. En este caso, el deploy fue subir el archivo a GitHub y activar Pages. El "depliegue" tardó menos de 2 minutos.</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-label">El flujo completo del deploy</div>
+      <div class="diagram">
+        <div class="d-row">
+          <div class="d-box" style="background:#eff6ff;color:#1e3a8a;min-width:130px">Tu PC<br><small>index.html (7KB)</small></div>
+          <div style="font-size:1.4em;color:#94a3b8">→</div>
+          <div class="d-box" style="background:#f0fdf4;color:#14532d;min-width:130px">Base64<br><small>convertido a texto</small></div>
+          <div style="font-size:1.4em;color:#94a3b8">→</div>
+          <div class="d-box" style="background:#faf5ff;color:#6d28d9;min-width:130px">API GitHub<br><small>HTTP PUT + Token</small></div>
+        </div>
+        <div class="d-arrow">↓</div>
+        <div class="d-row">
+          <div class="d-box" style="background:#fef2f2;color:#b91c1c;min-width:160px">URL pública 🌐<br><small>miguelippolito3-cloud<br>.github.io/figus-mundial-2026</small></div>
+          <div style="font-size:1.4em;color:#94a3b8">←</div>
+          <div class="d-box" style="background:#fff7ed;color:#c2410c;min-width:130px">GitHub Pages<br><small>activado via API</small></div>
+          <div style="font-size:1.4em;color:#94a3b8">←</div>
+          <div class="d-box" style="background:#f7fee7;color:#4d7c0f;min-width:130px">Repositorio<br><small>creado en GitHub</small></div>
+        </div>
+        <div class="d-label">⏱ Tiempo total: menos de 3 minutos · 0 pasos manuales para vos</div>
+      </div>
+    </div>
+
+    <div class="analogy">
+      <div class="icon">📮</div>
+      <div class="text">
+        <strong>La analogía</strong>
+        Imaginá que el archivo HTML es una carta. GitHub es el correo postal. GitHub Pages es cuando el correo convierte esa carta en una cartelera pública que cualquiera puede ver desde cualquier lugar del mundo. El token es la firma autorizada que le dice al correo "sí, yo soy el dueño, podés procesarla".
+      </div>
+    </div>
+
+    <div class="did">
+      <strong>Lo que hice paso a paso</strong>
+      <ul>
+        <li><strong>Verificación:</strong> encontré credenciales de GitHub guardadas en el administrador de credenciales de Windows (credential manager). El usuario es miguelippolito3-cloud.</li>
+        <li><strong>Creación del repo:</strong> HTTP POST a la API de GitHub → nuevo repo público llamado "figus-mundial-2026".</li>
+        <li><strong>Upload del archivo:</strong> convertí index.html a Base64 con Python y lo subí via HTTP PUT a la API de contenidos de GitHub.</li>
+        <li><strong>Activación de Pages:</strong> HTTP POST a la API de GitHub Pages → indicando que sirva desde la rama "main", directorio raíz.</li>
+        <li><strong>Verificación:</strong> consulté el estado cada 15 segundos hasta que Pages reportó "built" (construido). Tardó ~45 segundos.</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ GLOSARIO ══════════════════════════════════════════════════════ -->
+<div class="glossary" id="glosario">
+  <h2>📖 Glosario completo de términos</h2>
+  <div class="glos-grid">
+
+    <div class="glos-item">
+      <div class="gen">API — Application Programming Interface</div>
+      <div class="ges">Interfaz de Programación de Aplicaciones</div>
+      <div class="gdef">Canal estandarizado para que programas se comuniquen entre sí.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Base64</div>
+      <div class="ges">Codificación Base64</div>
+      <div class="gdef">Método para convertir cualquier archivo en una cadena de texto ASCII. Permite enviar archivos por canales que solo aceptan texto.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Browser</div>
+      <div class="ges">Navegador web</div>
+      <div class="gdef">Chrome, Firefox, Safari, Edge. Programa que interpreta HTML, CSS y JS para mostrar páginas web.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Clipboard API</div>
+      <div class="ges">API del Portapapeles</div>
+      <div class="gdef">Interfaz del navegador para acceder al copy/paste del sistema operativo desde JavaScript.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Computer Vision</div>
+      <div class="ges">Visión por computadora</div>
+      <div class="gdef">Rama de la IA que permite a las máquinas interpretar y entender imágenes.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Context Window</div>
+      <div class="ges">Ventana de contexto</div>
+      <div class="gdef">La "memoria de trabajo" de la IA: todo lo que puede "ver" al mismo tiempo en una conversación.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">CSS — Cascading Style Sheets</div>
+      <div class="ges">Hojas de Estilo en Cascada</div>
+      <div class="gdef">Lenguaje que define el aspecto visual de las páginas web.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">data-* attributes</div>
+      <div class="ges">Atributos de datos</div>
+      <div class="gdef">Forma de incrustar información personalizada en elementos HTML para usarla desde JavaScript.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Deploy / Deployment</div>
+      <div class="ges">Despliegue</div>
+      <div class="gdef">Proceso de publicar una aplicación en un servidor para que esté disponible al público.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Dynamic Site</div>
+      <div class="ges">Sitio dinámico</div>
+      <div class="gdef">Sitio web que requiere un servidor procesando lógica en tiempo real.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Event / Event Handler</div>
+      <div class="ges">Evento / Manejador de eventos</div>
+      <div class="gdef">Acción del usuario (click, tecla) y la función que responde a esa acción.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Event Bubbling</div>
+      <div class="ges">Burbujeo de eventos</div>
+      <div class="gdef">Propagación automática de un evento desde el elemento origen hacia sus padres en el DOM.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Event Delegation</div>
+      <div class="ges">Delegación de eventos</div>
+      <div class="gdef">Técnica que usa el burbujeo para manejar múltiples eventos desde un único listener en el padre.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Git</div>
+      <div class="ges">Git</div>
+      <div class="gdef">Sistema de control de versiones. Registra cada cambio en el código con quién lo hizo y cuándo.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">GitHub</div>
+      <div class="ges">GitHub</div>
+      <div class="gdef">Plataforma online para alojar repositorios Git y colaborar en proyectos de software.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">GitHub Pages</div>
+      <div class="ges">Páginas de GitHub</div>
+      <div class="gdef">Servicio gratuito de GitHub que publica sitios estáticos directamente desde un repositorio.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Hardcoded data</div>
+      <div class="ges">Datos incrustados en el código</div>
+      <div class="gdef">Valores escritos directamente en el código fuente, no leídos de un archivo externo o base de datos.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">HTML — HyperText Markup Language</div>
+      <div class="ges">Lenguaje de Marcado de Hipertexto</div>
+      <div class="gdef">Lenguaje que define la estructura y contenido de las páginas web.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">HTTP Methods (GET/POST/PUT/DELETE)</div>
+      <div class="ges">Métodos HTTP</div>
+      <div class="gdef">Tipos de pedidos que se pueden hacer a un servidor web: traer, crear, actualizar o borrar datos.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">JavaScript</div>
+      <div class="ges">JavaScript</div>
+      <div class="gdef">El único lenguaje de programación nativo del navegador. Añade lógica e interactividad a las páginas.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">JSON — JavaScript Object Notation</div>
+      <div class="ges">Notación de Objetos de JavaScript</div>
+      <div class="gdef">Formato de texto ligero y universal para representar datos estructurados.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Key-Value Store</div>
+      <div class="ges">Almacén clave-valor</div>
+      <div class="gdef">Base de datos simple donde cada pieza de información tiene un nombre (clave) y un contenido (valor).</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">localStorage</div>
+      <div class="ges">Almacenamiento local del navegador</div>
+      <div class="gdef">Espacio de datos privado en el navegador, por sitio web, que persiste entre sesiones.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Multimodal AI</div>
+      <div class="ges">IA multimodal</div>
+      <div class="gdef">IA capaz de procesar múltiples tipos de entrada: texto, imágenes, audio, video.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">No-backend / Serverless</div>
+      <div class="ges">Sin servidor propio</div>
+      <div class="gdef">Arquitectura donde toda la lógica corre en el cliente, sin servidor propio que mantener.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">OAuth Token</div>
+      <div class="ges">Token de acceso OAuth</div>
+      <div class="gdef">Credencial temporal y revocable para acceder a una API sin usar la contraseña real.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Persistence</div>
+      <div class="ges">Persistencia</div>
+      <div class="gdef">Capacidad de un dato de sobrevivir al cierre del programa o dispositivo.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Prompt / Prompt Engineering</div>
+      <div class="ges">Instrucción / Ingeniería de instrucciones</div>
+      <div class="gdef">El texto que le enviás a una IA y la técnica de redactarlo para obtener mejores resultados.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Repository (Repo)</div>
+      <div class="ges">Repositorio</div>
+      <div class="gdef">Carpeta en GitHub que contiene el código de un proyecto con su historial de cambios completo.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">State Management</div>
+      <div class="ges">Gestión de estado</div>
+      <div class="gdef">Cómo una app mantiene y actualiza la información que describe su situación actual.</div>
+    </div>
+
+    <div class="glos-item">
+      <div class="gen">Static Site</div>
+      <div class="ges">Sitio estático</div>
+      <div class="gdef">Sitio web compuesto solo de archivos que el navegador ejecuta localmente, sin servidor propio.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ CONCLUSIÓN ══════════════════════════════════════════════════ -->
+<div class="conclusion">
+  <h2>🎓 Lo que construimos y lo que aprendiste</h2>
+  <p>En una sola sesión, partiendo de fotos y una descripción en lenguaje natural, construimos una aplicación web completa con sistema de usuarios, persistencia de datos, interfaz interactiva, exportación de texto, layout de impresión y publicación en internet. Sin que vos escribieras una sola línea de código.</p>
+  <p>Esto no es magia. Es la combinación de décadas de tecnologías bien establecidas (HTML, CSS, JavaScript, Git) con una capa de IA que actúa como el programador que las conecta. Lo que cambia con la IA no es la tecnología de fondo —esa es la misma de siempre— sino quién puede acceder a ella.</p>
+
+  <div class="takeaways">
+    <div class="takeaway">
+      <span class="emoji">🌐</span>
+      <strong>El navegador es poderoso</strong>
+      HTML + CSS + JS pueden construir apps muy sofisticadas sin instalar nada. El navegador moderno es un entorno de ejecución completo.
+    </div>
+    <div class="takeaway">
+      <span class="emoji">💾</span>
+      <strong>Los datos viven en el dispositivo</strong>
+      localStorage guarda todo localmente. Para datos compartidos entre personas habría que agregar un servidor —eso es el siguiente nivel de complejidad.
+    </div>
+    <div class="takeaway">
+      <span class="emoji">🐛</span>
+      <strong>Los bugs son normales y tienen causa</strong>
+      El bug del click no fue un error aleatorio: tenía una causa técnica precisa (inline handlers vs event delegation). Entender el porqué de un bug es más valioso que el fix.
+    </div>
+    <div class="takeaway">
+      <span class="emoji">🚀</span>
+      <strong>GitHub Pages = hosting gratuito instantáneo</strong>
+      Para sitios estáticos, GitHub Pages es imbatible: gratuito, confiable, rápido y se actualiza automáticamente con cada cambio.
+    </div>
+    <div class="takeaway">
+      <span class="emoji">🤖</span>
+      <strong>La IA amplifica, no reemplaza</strong>
+      Vos aportaste el problema, el criterio y la validación. Yo aporté la ejecución técnica. El resultado es mejor que lo que cualquiera de los dos hubiera hecho solo.
+    </div>
+    <div class="takeaway">
+      <span class="emoji">🔑</span>
+      <strong>El prompt es la habilidad clave</strong>
+      La calidad de lo que construimos dependió en gran medida de qué tan bien describiste el problema, mostraste ejemplos y fuiste específico en los formatos que querías.
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<footer>
+  Generado con Claude AI · Figuritas Mundial 2026 · Mayo 2026<br>
+  <small>App publicada en <a href="https://miguelippolito3-cloud.github.io/figus-mundial-2026/" style="color:#94a3b8">miguelippolito3-cloud.github.io/figus-mundial-2026</a></small>
+</footer>
+
+</body>
+</html>
