@@ -47,6 +47,14 @@ header h1{font-size:1.15em;letter-spacing:.5px;margin-bottom:1px}
 .hbtn-sync{background:#a78bfa;color:#1e1b4b}
 .hbtn-fil{background:#fbbf24;color:#78350f}
 .mbtn-pdf{background:#f97316;color:#fff}
+/* Cloud status */
+.cloud-status{
+  font-size:.68em;font-weight:600;opacity:.9;margin-bottom:4px;
+  transition:opacity .3s
+}
+.cloud-status.saving{color:#fde68a}
+.cloud-status.synced{color:#86efac}
+.cloud-status.error{color:#fca5a5}
 
 /* ── MAIN ── */
 .main{padding:10px;max-width:1100px;margin:0 auto}
@@ -255,10 +263,11 @@ header h1{font-size:1.15em;letter-spacing:.5px;margin-bottom:1px}
       <div class="prog-pct" id="progPct">0%</div>
     </div>
     <div class="stats" id="stats">Cargando…</div>
+    <div id="cloudStatus" class="cloud-status">☁️ Conectando…</div>
     <div class="hbtns">
       <button class="hbtn hbtn-exp" id="btnExport">📋 Exportar</button>
       <button class="hbtn hbtn-prt" id="btnPreview">👁 Vista previa</button>
-      <button class="hbtn hbtn-sync" id="btnSync">💾 Sincronizar</button>
+      <button class="hbtn hbtn-sync" id="btnSync">📦 Backup</button>
       <button class="hbtn hbtn-fil" id="btnFilter">Solo faltan</button>
     </div>
   </header>
@@ -433,6 +442,97 @@ const MIKE_MISSING = {
 };
 const MIKE_VERSION='20260525'; // bump para forzar re-init automático
 
+// ── FIREBASE REALTIME SYNC ────────────────────────────────────────────────────
+const FB_BASE='https://figuritas-del-mundial-2026-default-rtdb.firebaseio.com';
+let fbSaveTimer=null, fbSource=null, fbSaving=false;
+
+function fbUrl(uid){
+  return `${FB_BASE}/users/${encodeURIComponent(uid)}/counts.json`;
+}
+
+function setCloud(state,msg){
+  const el=document.getElementById('cloudStatus');if(!el)return;
+  el.className='cloud-status '+(state==='ok'?'synced':state==='saving'?'saving':'error');
+  el.textContent=msg;
+}
+
+async function fbLoad(uid){
+  try{
+    const r=await fetch(fbUrl(uid),{signal:AbortSignal.timeout(7000)});
+    if(!r.ok)return null;
+    return await r.json(); // null si vacío, objeto si hay datos
+  }catch{return undefined;} // undefined = error de red
+}
+
+function scheduleFbSave(){
+  clearTimeout(fbSaveTimer);
+  setCloud('saving','☁️ Guardando…');
+  fbSaveTimer=setTimeout(doPush,3000);
+}
+
+async function doPush(){
+  if(!activeUser)return;
+  fbSaving=true;
+  try{
+    const r=await fetch(fbUrl(activeUser),{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(counts),
+      signal:AbortSignal.timeout(10000)
+    });
+    setCloud(r.ok?'ok':'error', r.ok?'☁️ Sincronizado ✓':'☁️ Error al guardar');
+  }catch{setCloud('error','☁️ Sin conexión');}
+  setTimeout(()=>{fbSaving=false;},2000);
+}
+
+function fbDataToCounts(d){
+  const c=initBlank();
+  for(const s of SECS)if(d[s.id])
+    for(const n of s.stk)
+      if(typeof d[s.id][n]==='number')c[s.id][n]=d[s.id][n];
+  return c;
+}
+
+function startSSE(uid){
+  if(fbSource){fbSource.close();fbSource=null;}
+  try{
+    fbSource=new EventSource(fbUrl(uid));
+    let first=true;
+    fbSource.addEventListener('put',async()=>{
+      if(first){first=false;return;} // skip: ya cargamos con GET
+      if(fbSaving)return;            // skip: lo causamos nosotros
+      const d=await fbLoad(uid);
+      if(d&&typeof d==='object'){
+        counts=fbDataToCounts(d);
+        saveCounts(uid,counts);
+        render();
+        setCloud('ok','☁️ Actualizado ✓');
+        showToast('🔄 Cambios desde otro dispositivo');
+      }
+    });
+    fbSource.onerror=()=>setCloud('error','☁️ Sin conexión');
+  }catch{}
+}
+
+async function fbInit(uid){
+  setCloud('saving','☁️ Conectando…');
+  const d=await fbLoad(uid);
+  if(d&&typeof d==='object'){
+    counts=fbDataToCounts(d);
+    saveCounts(uid,counts);
+    setCloud('ok','☁️ Sincronizado ✓');
+    render();
+  } else if(d===null){
+    // Base de datos vacía — subimos datos locales
+    setCloud('saving','☁️ Guardando…');
+    scheduleFbSave();
+  } else {
+    // Error de red — usamos localStorage
+    setCloud('error','☁️ Sin conexión');
+  }
+  startSSE(uid);
+}
+
 // ── STATE ─────────────────────────────────────────────────────────────────────
 const KEY_USERS='figus26-users', KEY_ACTIVE='figus26-active';
 const dataKey = id => 'figus26-data-'+id;
@@ -463,7 +563,11 @@ function loadCounts(uid){
   }catch{return null;}
 }
 function saveCounts(uid,c){try{localStorage.setItem(dataKey(uid),JSON.stringify(c));}catch{}}
-function save(){if(activeUser)saveCounts(activeUser,counts);}
+function save(){
+  if(!activeUser)return;
+  saveCounts(activeUser,counts); // guarda local inmediatamente
+  scheduleFbSave();              // sube a Firebase después de 3 seg de inactividad
+}
 
 const MIKE_VER_KEY='figus26-mike-ver';
 function bootstrap(){
@@ -474,7 +578,6 @@ function bootstrap(){
     saveCounts('Mike',initMike());
     localStorage.setItem(MIKE_VER_KEY,MIKE_VERSION);
   }
-  // Si los datos de Mike son de una versión vieja, los re-inicializa automáticamente
   if(localStorage.getItem(MIKE_VER_KEY)!==MIKE_VERSION){
     saveCounts('Mike',initMike());
     localStorage.setItem(MIKE_VER_KEY,MIKE_VERSION);
@@ -518,13 +621,15 @@ function doUndo(){
 document.getElementById('btnUndo').addEventListener('click',doUndo);
 
 // ── USER MANAGEMENT ───────────────────────────────────────────────────────────
-function switchUser(uid){
+async function switchUser(uid){
   if(uid===activeUser)return;
   save();
+  if(fbSource){fbSource.close();fbSource=null;}
   activeUser=uid;
   localStorage.setItem(KEY_ACTIVE,uid);
   counts=loadCounts(uid)||initBlank();
   renderUserBar();render();
+  await fbInit(uid); // carga desde Firebase y arranca SSE para el nuevo usuario
 }
 function addUser(){
   const name=prompt('Nombre del nuevo perfil (ej: FRAN, SOF, LUCA):');
@@ -926,7 +1031,10 @@ document.getElementById('btnPDF').addEventListener('click',()=>{
 });
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
-bootstrap();renderUserBar();render();
+bootstrap();        // carga usuarios y datos desde localStorage (inmediato)
+renderUserBar();
+render();
+fbInit(activeUser); // carga desde Firebase en background y activa sync en tiempo real
 </script>
 </body>
 </html>
