@@ -44,7 +44,9 @@ header h1{font-size:1.15em;letter-spacing:.5px;margin-bottom:1px}
 .hbtn:hover{transform:scale(1.05);filter:brightness(1.1)}
 .hbtn-exp{background:#4ade80;color:#14532d}
 .hbtn-prt{background:#60a5fa;color:#1e3a5f}
+.hbtn-sync{background:#a78bfa;color:#1e1b4b}
 .hbtn-fil{background:#fbbf24;color:#78350f}
+.mbtn-pdf{background:#f97316;color:#fff}
 
 /* ── MAIN ── */
 .main{padding:10px;max-width:1100px;margin:0 auto}
@@ -256,6 +258,7 @@ header h1{font-size:1.15em;letter-spacing:.5px;margin-bottom:1px}
     <div class="hbtns">
       <button class="hbtn hbtn-exp" id="btnExport">📋 Exportar</button>
       <button class="hbtn hbtn-prt" id="btnPreview">👁 Vista previa</button>
+      <button class="hbtn hbtn-sync" id="btnSync">💾 Sincronizar</button>
       <button class="hbtn hbtn-fil" id="btnFilter">Solo faltan</button>
     </div>
   </header>
@@ -296,6 +299,35 @@ header h1{font-size:1.15em;letter-spacing:.5px;margin-bottom:1px}
   </div>
 </div>
 
+<!-- ── SYNC MODAL ── -->
+<div class="overlay" id="syncOverlay">
+  <div class="modal" style="max-width:560px">
+    <h2>💾 Sincronizar entre dispositivos</h2>
+    <div style="font-size:.8em;color:#475569;background:#f0f9ff;border-radius:8px;padding:9px 11px;border-left:3px solid #60a5fa">
+      ℹ️ <strong>Los datos se guardan solo en este navegador.</strong><br>
+      Para ver o editar desde otro celular/PC, exportá tus datos y cargalos allá.
+    </div>
+    <div style="font-size:.82em;font-weight:700;color:#374151;margin-top:2px">📤 Exportar — llevar a otro dispositivo</div>
+    <div style="display:flex;gap:8px">
+      <button class="mbtn mbtn-copy" id="btnDownloadJSON" style="flex:1">⬇️ Descargar archivo</button>
+      <button class="mbtn mbtn-copy" id="btnCopyJSON" style="flex:1;background:#a78bfa;color:#1e1b4b">📋 Copiar JSON</button>
+    </div>
+    <div style="font-size:.82em;font-weight:700;color:#374151;margin-top:4px">📥 Importar — cargar desde otro dispositivo</div>
+    <textarea id="syncPaste" class="mtext" rows="4" style="min-height:80px;max-height:120px;resize:vertical;font-size:.75em"
+      placeholder="Pegá aquí el JSON copiado desde el otro dispositivo…"></textarea>
+    <div style="display:flex;gap:8px">
+      <label class="mbtn mbtn-print" style="cursor:pointer;flex:1;text-align:center">
+        📂 Cargar archivo
+        <input type="file" id="syncFileInput" accept=".json" style="display:none">
+      </label>
+      <button class="mbtn" id="btnImportJSON" style="flex:1;background:#4ade80;color:#14532d">✓ Importar pegado</button>
+    </div>
+    <div class="mbtns">
+      <button class="mbtn mbtn-close" id="btnCloseSync">✕ Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── PREVIEW MODAL ── -->
 <div class="overlay" id="previewOverlay">
   <div class="prev-modal">
@@ -303,6 +335,7 @@ header h1{font-size:1.15em;letter-spacing:.5px;margin-bottom:1px}
       <h2>🖨️ Vista previa de impresión</h2>
       <div class="prev-actions">
         <button class="mbtn mbtn-print" id="btnDoPrint">🖨️ Imprimir</button>
+        <button class="mbtn mbtn-pdf" id="btnPDF">📄 Guardar PDF</button>
         <button class="mbtn mbtn-close" id="btnClosePreview">✕ Cerrar</button>
       </div>
     </div>
@@ -373,30 +406,32 @@ const SECS = [
   {id:'CC',   label:'CC ⭐',    stk:R(14)},
 ];
 
+// Datos Mike actualizados al 25/05/2026 — Tengo 849/994 · Faltan 145
 const MIKE_MISSING = {
-  FWC1:['4'],FWC2:['5'],FWC3:[],
-  MEX:['6','15','17','18','20'],RSA:['8','12','14','17','18'],
-  KOR:['3','7','16','19','20'],CZE:['1','14'],CAN:['10','14','17','18'],
-  BIH:['18'],QAT:['1','5','14','16','18'],SUI:['4','7','15','18','19'],
-  BRA:['9','16','18','20'],MAR:['3','5','14'],HAI:['1','6','10'],
-  SCO:['4','6','8','12','15','16','17'],USA:[],PAR:['5','9','16','17'],
-  AUS:['2','4','6','11','15','16','18'],TUR:['4'],
-  GER:['2','8','10','14','15','18'],CUW:['5','8','9','12','14','15','19'],
-  CIV:['3','6','8','10','12','15','17'],ECU:['7','9','11','17'],NED:[],
-  JPN:['16'],SWE:['1','6','9','12','15','20'],TUN:['3','6','19'],
-  BEL:['2','6','11','14','18'],EGY:['4','8','18'],
-  IRN:['5','6','9','10','12','14','15','16','17'],NZL:['7','10','11','16'],
-  ESP:['1','3','4','7','10','12','14','16','19'],CPV:['2','6','15','17','20'],
-  KSA:['5','9','14','18','19'],URU:['2','3','5','6','8','9','17'],
-  FRA:['5','6','10','14','15','18'],SEN:['7','18'],IRQ:[],
-  NOR:['4','5','9','18'],ARG:['17'],ALG:['3','4','5','14','18','19'],
-  AUT:['2','3','6','9','10','15','16','19','20'],
-  JOR:['2','3','4','5','8','10','12','15','16','19','20'],
-  POR:['10','17','19'],COD:['3','4','8','18'],UZB:['1','3','14'],
-  COL:['3','4','5','6','12','14','15','16','17'],ENG:['18'],
-  CRO:['2','5','8','14'],GHA:['1','3','6','10','15'],
-  PAN:['3','5','6','9','10','14','15','19'],CC:[],
+  FWC1:[],FWC2:[],FWC3:[],
+  MEX:[],RSA:['12','14','17','18'],
+  KOR:['7','16','19','20'],CZE:['1','14'],CAN:['17'],
+  BIH:[],QAT:['1','5','14','16','18'],SUI:['4','7','15','18','19'],
+  BRA:['9','16','20'],MAR:['5'],HAI:['6','10'],
+  SCO:['4','6','8','12','17'],USA:[],PAR:['17'],
+  AUS:['4','6','11','15','16','18'],TUR:[],
+  GER:['8','14','18'],CUW:['8','11','14','19'],
+  CIV:['3','6','10','12','15','18'],ECU:['9'],NED:[],
+  JPN:[],SWE:['1','12'],TUN:['3','6','19'],
+  BEL:['6','14','18'],EGY:['4','18'],
+  IRN:['5','6','9','10','12','14','15','16'],NZL:['7','10','16'],
+  ESP:['1','3','4','7','12','14','16','19'],CPV:['2','10','15','17','20'],
+  KSA:['5','9','14','19'],URU:['2','3','6','9'],
+  FRA:['5','6','10','14'],SEN:['7','18'],IRQ:[],
+  NOR:['4','18'],ARG:['17'],ALG:['5','14','18'],
+  AUT:['2','6','9','10','15','19','20'],
+  JOR:['3','4','5','10','12','15','16','19','20'],
+  POR:[],COD:['4','8','18'],UZB:[],
+  COL:['3','5','6','12','14','15','16','17'],ENG:['18'],
+  CRO:['2','5'],GHA:['1','15'],
+  PAN:['5','19'],CC:['1','4','13','14'],
 };
+const MIKE_VERSION='20260525'; // bump para forzar re-init automático
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 const KEY_USERS='figus26-users', KEY_ACTIVE='figus26-active';
@@ -430,12 +465,19 @@ function loadCounts(uid){
 function saveCounts(uid,c){try{localStorage.setItem(dataKey(uid),JSON.stringify(c));}catch{}}
 function save(){if(activeUser)saveCounts(activeUser,counts);}
 
+const MIKE_VER_KEY='figus26-mike-ver';
 function bootstrap(){
   try{users=JSON.parse(localStorage.getItem(KEY_USERS)||'null');}catch{users=null;}
   if(!users){
     users=[{id:'Mike',name:'Mike'},{id:'FLM',name:'FLM'}];
     localStorage.setItem(KEY_USERS,JSON.stringify(users));
     saveCounts('Mike',initMike());
+    localStorage.setItem(MIKE_VER_KEY,MIKE_VERSION);
+  }
+  // Si los datos de Mike son de una versión vieja, los re-inicializa automáticamente
+  if(localStorage.getItem(MIKE_VER_KEY)!==MIKE_VERSION){
+    saveCounts('Mike',initMike());
+    localStorage.setItem(MIKE_VER_KEY,MIKE_VERSION);
   }
   const saved=localStorage.getItem(KEY_ACTIVE);
   activeUser=(saved&&users.find(u=>u.id===saved))?saved:users[0].id;
@@ -773,6 +815,115 @@ function fbCopy(t,cb){
   ta.focus();ta.select();try{document.execCommand('copy');cb();}catch{}
   document.body.removeChild(ta);
 }
+
+// ── SYNC / IMPORT-EXPORT JSON ─────────────────────────────────────────────────
+function buildSyncJSON(){
+  const user=users.find(u=>u.id===activeUser);
+  return JSON.stringify({user:activeUser,name:user?user.name:activeUser,counts},null,2);
+}
+
+document.getElementById('btnSync').addEventListener('click',()=>{
+  document.getElementById('syncPaste').value='';
+  document.getElementById('syncOverlay').classList.add('open');
+});
+document.getElementById('btnCloseSync').addEventListener('click',()=>
+  document.getElementById('syncOverlay').classList.remove('open'));
+document.getElementById('syncOverlay').addEventListener('click',e=>{
+  if(e.target===document.getElementById('syncOverlay'))
+    document.getElementById('syncOverlay').classList.remove('open');
+});
+
+// Descargar JSON como archivo
+document.getElementById('btnDownloadJSON').addEventListener('click',()=>{
+  const user=users.find(u=>u.id===activeUser);
+  const blob=new Blob([buildSyncJSON()],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`figus-${(user?user.name:activeUser).replace(/\s+/g,'_')}.json`;
+  a.click();URL.revokeObjectURL(a.href);
+  showToast('Archivo descargado ✓');
+});
+
+// Copiar JSON al portapapeles
+document.getElementById('btnCopyJSON').addEventListener('click',function(){
+  const text=buildSyncJSON(),btn=this;
+  const done=()=>{btn.textContent='✓ ¡Copiado!';setTimeout(()=>btn.textContent='📋 Copiar JSON',2000);};
+  if(navigator.clipboard)navigator.clipboard.writeText(text).then(done).catch(()=>fbCopy(text,done));
+  else fbCopy(text,done);
+});
+
+// Importar JSON desde textarea
+document.getElementById('btnImportJSON').addEventListener('click',()=>{
+  const raw=document.getElementById('syncPaste').value.trim();
+  if(!raw){showToast('Pegá primero el JSON copiado');return;}
+  importJSON(raw);
+});
+
+// Importar JSON desde archivo
+document.getElementById('syncFileInput').addEventListener('change',function(){
+  const file=this.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>importJSON(e.target.result);
+  reader.readAsText(file);
+  this.value=''; // reset para poder volver a cargar el mismo archivo
+});
+
+function importJSON(raw){
+  try{
+    const data=JSON.parse(raw);
+    if(!data.counts)throw new Error('Formato inválido');
+    // Merge counts para el usuario activo
+    const c=initBlank();
+    for(const s of SECS)if(data.counts[s.id])
+      for(const n of s.stk)
+        if(typeof data.counts[s.id][n]==='number')c[s.id][n]=data.counts[s.id][n];
+    counts=c;save();render();
+    document.getElementById('syncOverlay').classList.remove('open');
+    showToast('¡Datos importados! ✓');
+  }catch(e){
+    alert('Error al importar: '+e.message+'\n\nAsegurate de pegar el JSON completo.');
+  }
+}
+
+// ── PDF ───────────────────────────────────────────────────────────────────────
+document.getElementById('btnPDF').addEventListener('click',()=>{
+  const content=buildPrintHTML();
+  // Estilos inline para la ventana de impresión (funciona en cualquier navegador/mobile)
+  const pStyles=`
+    @page{size:A4 portrait;margin:10mm 8mm}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,Helvetica,sans-serif}
+    .phead{display:flex;justify-content:space-between;align-items:baseline;
+      border-bottom:1.5pt solid #000;padding-bottom:4pt;margin-bottom:5pt;
+      font-size:9pt;line-height:1.4}
+    .phead-left strong{font-size:10.5pt}
+    .phead-right{font-size:8pt;text-align:right;color:#333}
+    .pcols{column-count:3;column-gap:8pt;column-rule:.4pt solid #bbb;
+      font-size:9pt;line-height:1.45;column-fill:balance}
+    .prow{display:flex;flex-wrap:wrap;margin-bottom:2pt;break-inside:avoid;page-break-inside:avoid}
+    .plbl{font-weight:700;white-space:nowrap;margin-right:3pt}
+    .pnums{flex:1}
+    .psep{column-span:all;border-top:1pt solid #000;margin-top:6pt;
+      padding-top:3pt;font-size:8pt;font-weight:700;margin-bottom:3pt}
+    .pdup-cols{column-count:3;column-gap:8pt;font-size:8.5pt;line-height:1.4}
+  `;
+  const win=window.open('','_blank');
+  if(!win){alert('El navegador bloqueó la ventana emergente. Permitila e intentá de nuevo.');return;}
+  win.document.write(`<!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Figus Mundial 2026</title>
+    <style>${pStyles}</style>
+  </head><body>
+    ${content}
+    <script>
+      window.onload=function(){
+        setTimeout(function(){window.print();},300);
+      };
+    <\/script>
+  </body></html>`);
+  win.document.close();
+});
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 bootstrap();renderUserBar();render();
