@@ -266,7 +266,7 @@ header h1{font-size:1.15em;letter-spacing:.5px;margin-bottom:1px}
     <div id="cloudStatus" class="cloud-status">☁️ Conectando…</div>
     <div class="hbtns">
       <button class="hbtn hbtn-exp" id="btnExport">📋 Exportar</button>
-      <button class="hbtn hbtn-prt" id="btnPreview">👁 Vista previa</button>
+      <button class="hbtn hbtn-prt" id="btnPreview">🖨️ Imprimir</button>
       <button class="hbtn hbtn-sync" id="btnSync">📦 Backup</button>
       <button class="hbtn hbtn-fil" id="btnFilter">Solo faltan</button>
     </div>
@@ -415,32 +415,32 @@ const SECS = [
   {id:'CC',   label:'CC ⭐',    stk:R(14)},
 ];
 
-// Datos Mike actualizados al 25/05/2026 — Tengo 849/994 · Faltan 145
+// Datos Mike actualizados al 25/05/2026 — Tengo 896/994 · Faltan 98
 const MIKE_MISSING = {
   FWC1:[],FWC2:[],FWC3:[],
-  MEX:[],RSA:['12','14','17','18'],
-  KOR:['7','16','19','20'],CZE:['1','14'],CAN:['17'],
-  BIH:[],QAT:['1','5','14','16','18'],SUI:['4','7','15','18','19'],
-  BRA:['9','16','20'],MAR:['5'],HAI:['6','10'],
-  SCO:['4','6','8','12','17'],USA:[],PAR:['17'],
-  AUS:['4','6','11','15','16','18'],TUR:[],
-  GER:['8','14','18'],CUW:['8','11','14','19'],
-  CIV:['3','6','10','12','15','18'],ECU:['9'],NED:[],
-  JPN:[],SWE:['1','12'],TUN:['3','6','19'],
-  BEL:['6','14','18'],EGY:['4','18'],
-  IRN:['5','6','9','10','12','14','15','16'],NZL:['7','10','16'],
-  ESP:['1','3','4','7','12','14','16','19'],CPV:['2','10','15','17','20'],
-  KSA:['5','9','14','19'],URU:['2','3','6','9'],
-  FRA:['5','6','10','14'],SEN:['7','18'],IRQ:[],
+  MEX:[],RSA:['12','17','18'],
+  KOR:['16','19','20'],CZE:['1','14'],CAN:['17'],
+  BIH:[],QAT:['1','14','16','18'],SUI:['4','7','15','18'],
+  BRA:['9','20'],MAR:['5'],HAI:['6','10'],
+  SCO:['6','12'],USA:[],PAR:[],
+  AUS:['6','11','15','16','18'],TUR:[],
+  GER:['8','14','18'],CUW:['8','14','19'],
+  CIV:['3','6','10','12','18'],ECU:['9'],NED:[],
+  JPN:[],SWE:['1','12'],TUN:['6','19'],
+  BEL:['6'],EGY:['4','18'],
+  IRN:['6','9','10','12','15','16'],NZL:['7','10','16'],
+  ESP:['1','3','7','14','16'],CPV:['2','10','15','17','20'],
+  KSA:['5','9','14'],URU:['3'],
+  FRA:['10'],SEN:['7','18'],IRQ:[],
   NOR:['4','18'],ARG:['17'],ALG:['5','14','18'],
-  AUT:['2','6','9','10','15','19','20'],
-  JOR:['3','4','5','10','12','15','16','19','20'],
+  AUT:['19','20'],
+  JOR:['4','5'],
   POR:[],COD:['4','8','18'],UZB:[],
-  COL:['3','5','6','12','14','15','16','17'],ENG:['18'],
-  CRO:['2','5'],GHA:['1','15'],
-  PAN:['5','19'],CC:['1','4','13','14'],
+  COL:['3','6','15'],ENG:[],
+  CRO:['2','5'],GHA:['15'],
+  PAN:['5'],CC:['1','4','13','14'],
 };
-const MIKE_VERSION='20260525'; // bump para forzar re-init automático
+const MIKE_VERSION='20260526'; // bump para forzar re-init automático
 
 // ── FIREBASE REALTIME SYNC ────────────────────────────────────────────────────
 const FB_BASE='https://figuritas-del-mundial-2026-default-rtdb.firebaseio.com';
@@ -516,6 +516,14 @@ function startSSE(uid){
 
 async function fbInit(uid){
   setCloud('saving','☁️ Conectando…');
+  // Si Mike acaba de actualizarse, pisamos Firebase con los nuevos datos
+  if(uid==='Mike'&&mikeJustUpdated){
+    mikeJustUpdated=false;
+    await doPush(); // sube datos frescos a Firebase inmediatamente
+    setCloud('ok','☁️ Mike actualizado ✓');
+    startSSE(uid);
+    return;
+  }
   const d=await fbLoad(uid);
   if(d&&typeof d==='object'){
     counts=fbDataToCounts(d);
@@ -523,11 +531,9 @@ async function fbInit(uid){
     setCloud('ok','☁️ Sincronizado ✓');
     render();
   } else if(d===null){
-    // Base de datos vacía — subimos datos locales
     setCloud('saving','☁️ Guardando…');
     scheduleFbSave();
   } else {
-    // Error de red — usamos localStorage
     setCloud('error','☁️ Sin conexión');
   }
   startSSE(uid);
@@ -570,6 +576,7 @@ function save(){
 }
 
 const MIKE_VER_KEY='figus26-mike-ver';
+let mikeJustUpdated=false;
 function bootstrap(){
   try{users=JSON.parse(localStorage.getItem(KEY_USERS)||'null');}catch{users=null;}
   if(!users){
@@ -581,6 +588,7 @@ function bootstrap(){
   if(localStorage.getItem(MIKE_VER_KEY)!==MIKE_VERSION){
     saveCounts('Mike',initMike());
     localStorage.setItem(MIKE_VER_KEY,MIKE_VERSION);
+    mikeJustUpdated=true; // indica que hay que pisar Firebase también
   }
   const saved=localStorage.getItem(KEY_ACTIVE);
   activeUser=(saved&&users.find(u=>u.id===saved))?saved:users[0].id;
